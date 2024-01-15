@@ -25,7 +25,9 @@ class YourTestCase(TestCase):
         factory = APIRequestFactory()
 
         request = factory.post(url, payload, format='json')
-        response = submit_answer(request, hash=game_id) 
+        response = submit_answer(request, hash=game_id)
+        self.assertEqual(response.data['status'], True)
+        self.assertEqual(response.data['message'], 'Correct answer')
 
         print(response.data)
 
