@@ -8,12 +8,11 @@ from . models import GameModel, AnswerModel
 from django.shortcuts import get_object_or_404
 from lazone_api_service.utils import get_shuffled_names
 from core_backend.implementation.external_api import get_movie, get_random_user
+from lazone_api_service.shared.app_error import CustomSuccessResponse, CustomErrorResponse, CustomError
+from django.db.models import F
+from django.core.serializers import serialize
 import json
 import random
-
-
-
-
 
 
 # Create your views here.
@@ -40,22 +39,20 @@ def play_game(request, *args, **kwargs):
 
         game_data = get_object_or_404(GameModel, id=game_id)
 
-        if(game_data.is_completed == True):
-            raise Exception("Game already completed, please start another game to continue playing")
-
+        if game_data.is_completed:
+            response = Response({"status_code": 400, "message": "Game already completed, please start another game to continue playing"})
+            return response
 
         page_number = random.randrange(1, 20)
 
         movie_data = get_movie(page_number)
-        random_user = get_random_user()
 
         movie_data_api_response = json.loads(movie_data)
-        random_user_api_response = json.loads(random_user)
 
         object_count = random.randrange(len(movie_data_api_response['results']))
 
         api_data = movie_data_api_response['results'][object_count]
-        api_data2 = movie_data_api_response['results'][random.randrange(int(object_count) + 1)]
+        api_data2 = movie_data_api_response['results'][random.randrange(int(object_count) + 6)]
 
         actor_name = api_data["name"]
         actor_name_2 = api_data2["name"]
@@ -68,7 +65,7 @@ def play_game(request, *args, **kwargs):
         actors = get_shuffled_names(actor_name, actor_name_2)
 
         response = {
-            "answer_id": answer.id,
+            "quiz_id": answer.id,
             "data": {
                 "question": f"which of these actors starrd in the movie {movie_name}",
                 "options": actors
@@ -80,49 +77,63 @@ def play_game(request, *args, **kwargs):
             "status": False,
             "message": str(e),
         }
-
     return Response(response)
 
 
-@api_view(["POST"])
 def submit_answer(request, *args, **kwargs):
-    game_id = kwargs['hash']
+    try:
+        game_id = kwargs['hash']
 
-    body = request.body
-    serialized = json.loads(body)
+        body = request.body
+        serialized = json.loads(body)
 
-    quizId = serialized["quizId"]
+        quiz_id = serialized.get("quizId")
 
-    #validate user input
-    answer_data = get_object_or_404(AnswerModel, id=quizId)
-    game_data = get_object_or_404(GameModel, id=game_id)
+        answer_data = get_object_or_404(AnswerModel, id=quiz_id)
+        game_data = get_object_or_404(GameModel, id=game_id)
 
-    if(answer_data.gameId != game_id):
-        raise Exception("Invalid game id provided")
+        serialized_data = serialize('json', [answer_data])
+        deserialized_data = json.loads(serialized_data)
 
-    if(game_data.is_completed == True):
-        raise Exception("Game already completed, please start another game to continue playing")
-    
-    #check answer
-    user_response = serialized["answer"]
+        game_id_from_serialized_data = deserialized_data[0]['fields']['gameId']
 
-    if(user_response != answer_data.answer):
-        GameModel.objects.filter(id=game_id).update(is_completed=True)
+        print(game_id_from_serialized_data, game_id)
 
-        response  = {
-            "status": "false",
-            "message": f"oops you got that wrong the correct answer was {user_response}"
-        }
+        if answer_data.answered:
+            response = CustomErrorResponse(data={"status_code": 400, "message": "Already answered quiz, please move to the next"})
+            return response
 
-    else:
-        game_data.score += 5 #decided to give 5 points for every question answered correctly
-    
-        GameModel.objects.filter(id=game_id).update(score=game_data.score, is_completed=False)
+        if game_id_from_serialized_data != game_id:
+            response = CustomErrorResponse(data={"status_code": 400, "message": "Invalid game id provided"})
+            return response
 
-        response  = {
-            "status": "true",
-            "message": f"correct answer",
-            "score": game_data.score
-        }
+
+        if game_data.is_completed == True:
+            response = CustomErrorResponse(data={"status_code": 400, "message": "Game already completed, please start another game to continue playing"})
+            return response
+
+        user_response = serialized.get("answer")
+
+        print(user_response, answer_data.answer)
+
+        if user_response != answer_data.answer:
+            GameModel.objects.filter(id=game_id).update(is_completed=True)
+            response = CustomErrorResponse(data={"status_code": 400, "message": f"Oops! You got that wrong. The correct answer was {answer_data.answer}"})
+            return response
+
+        else:
+            game_data.score += 5  # Decide to give 5 points for every question answered correctly
+
+            GameModel.objects.filter(id=game_id).update(score=game_data.score, is_completed=False)
+            AnswerModel.objects.filter(id=quiz_id).update(answered=True)
+
+            response = {
+                "status": True,
+                "message": "Correct answer",
+                "score": game_data.score
+            }
+
+    except CustomError as error:
+        return Response({str(error)}, status=error.status_code)
 
     return Response(response)
