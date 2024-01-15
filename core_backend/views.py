@@ -6,12 +6,17 @@ from rest_framework.response import Response
 from core_backend.repository import game_repo
 from . models import GameModel, AnswerModel
 from django.shortcuts import get_object_or_404
-from core_backend.implementation import themoviedb
+from lazone_api_service.utils import get_shuffled_names
+from core_backend.implementation.external_api import get_movie, get_random_user
 import json
 import random
+
+
+
+
+
+
 # Create your views here.
-
-
 
 def health_api(request, *args, **kwargs):
     response = {
@@ -27,7 +32,7 @@ def start_game(request):
     return Response({'id': new_game_id})
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 def play_game(request, *args, **kwargs):
     api_data = {} # i added this to ensure it exists regardless of whether the try block is executed successfully
     try:
@@ -38,39 +43,38 @@ def play_game(request, *args, **kwargs):
         if(game_data.is_completed == True):
             raise Exception("Game already completed, please start another game to continue playing")
 
-        print(game_data)
 
-        page_number = random.randrange(1, 9)
+        page_number = random.randrange(1, 20)
 
-        movie_data = themoviedb.get_movie(page_number)
+        movie_data = get_movie(page_number)
+        random_user = get_random_user()
 
-        api_response = json.loads(movie_data)
+        movie_data_api_response = json.loads(movie_data)
+        random_user_api_response = json.loads(random_user)
 
-        object_count = random.randrange(len(api_response['results']))
+        object_count = random.randrange(len(movie_data_api_response['results']))
 
-        api_data = api_response['results'][object_count]
+        api_data = movie_data_api_response['results'][object_count]
+        api_data2 = movie_data_api_response['results'][random.randrange(int(object_count) + 1)]
 
-        actor_name = api_data["original_name"]
+        actor_name = api_data["name"]
+        actor_name_2 = api_data2["name"]
 
-        movie_name = api_data["known_for"][1]["original_title"]
+        movie_name = api_data["known_for"][0]["original_title"]
 
-        print(actor_name, movie_name)
 
-        answerId = AnswerModel.objects.create(gameId=game_id, answer=actor_name)
+        answer = AnswerModel.objects.create(gameId=game_id, answer=actor_name)
+
+        actors = get_shuffled_names(actor_name, actor_name_2)
 
         response = {
-            "answer_id": answerId,
+            "answer_id": answer.id,
             "data": {
                 "question": f"which of these actors starrd in the movie {movie_name}",
-                "options": [actor_name, "John Doe"]
+                "options": actors
             }
         }
         
-    except KeyError:
-        response = {
-            "status": False,
-            "message": "Hash parameter is missing.",
-        }
     except Exception as e:
         response = {
             "status": False,
@@ -78,3 +82,28 @@ def play_game(request, *args, **kwargs):
         }
 
     return Response(response)
+
+
+@api_view(["POST"])
+def submit_answer(request, *args, **kwargs):
+    game_id = kwargs['hash']
+
+    body = request.body
+    serialized = json.loads(body)
+
+    quizId = serialized["quizId"]
+
+    answer_data = get_object_or_404(AnswerModel, id=quizId)
+    game_data = get_object_or_404(GameModel, id=game_id)
+
+    if(answer_data.gameId != game_id):
+        raise Exception("Invalid game id provided")
+
+    if(game_data.is_completed == True):
+        raise Exception("Game already completed, please start another game to continue playing")
+    
+    #check answer
+    
+    
+
+    return JsonResponse({"test": quizId})
