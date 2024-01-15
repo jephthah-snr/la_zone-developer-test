@@ -80,6 +80,7 @@ def play_game(request, *args, **kwargs):
     return Response(response)
 
 
+@api_view(["POST"])
 def submit_answer(request, *args, **kwargs):
     try:
         game_id = kwargs['hash']
@@ -92,24 +93,20 @@ def submit_answer(request, *args, **kwargs):
         answer_data = get_object_or_404(AnswerModel, id=quiz_id)
         game_data = get_object_or_404(GameModel, id=game_id)
 
-        serialized_data = serialize('json', [answer_data])
-        deserialized_data = json.loads(serialized_data)
-
-        game_id_from_serialized_data = deserialized_data[0]['fields']['gameId']
-
-        print(game_id_from_serialized_data, game_id)
+        serialized_gameId = AnswerModel.objects.filter(id=quiz_id).values_list('gameId', flat=True).first()
 
         if answer_data.answered:
-            response = CustomErrorResponse(data={"status_code": 400, "message": "Already answered quiz, please move to the next"})
+            response = Response({"status_code": 400, "message": "Already answered quiz, please move to the next"})
+            return response
+        
+        print(serialized_gameId, game_id)
+
+        if str(serialized_gameId) != game_id:
+            response = Response({"status_code": 400, "message": "Invalid game id provided"})
             return response
 
-        if game_id_from_serialized_data != game_id:
-            response = CustomErrorResponse(data={"status_code": 400, "message": "Invalid game id provided"})
-            return response
-
-
-        if game_data.is_completed == True:
-            response = CustomErrorResponse(data={"status_code": 400, "message": "Game already completed, please start another game to continue playing"})
+        if game_data.is_completed:
+            response = Response({"status_code": 400, "message": "Game already completed, please start another game to continue playing"})
             return response
 
         user_response = serialized.get("answer")
@@ -118,22 +115,26 @@ def submit_answer(request, *args, **kwargs):
 
         if user_response != answer_data.answer:
             GameModel.objects.filter(id=game_id).update(is_completed=True)
-            response = CustomErrorResponse(data={"status_code": 400, "message": f"Oops! You got that wrong. The correct answer was {answer_data.answer}"})
+            response = Response({"status_code": 400, "message": f"Oops! You got that wrong. The correct answer was {answer_data.answer}"})
             return response
 
         else:
-            game_data.score += 5  # Decide to give 5 points for every question answered correctly
+            game_data.score += 5  # i decided to give 5 points for every question answered correctly
 
             GameModel.objects.filter(id=game_id).update(score=game_data.score, is_completed=False)
             AnswerModel.objects.filter(id=quiz_id).update(answered=True)
 
+            print(game_data.score)
+
             response = {
-                "status": True,
-                "message": "Correct answer",
-                "score": game_data.score
+            "status": True,
+            "message": "Correct answer",
+            "score": game_data.score
             }
 
-    except CustomError as error:
-        return Response({str(error)}, status=error.status_code)
+        return Response(response)
 
-    return Response(response)
+    except CustomError as error:
+        return Response({"error": str(error)}, status=error.status_code)
+
+
