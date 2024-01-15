@@ -93,6 +93,7 @@ def submit_answer(request, *args, **kwargs):
 
     quizId = serialized["quizId"]
 
+    #validate user input
     answer_data = get_object_or_404(AnswerModel, id=quizId)
     game_data = get_object_or_404(GameModel, id=game_id)
 
@@ -103,7 +104,25 @@ def submit_answer(request, *args, **kwargs):
         raise Exception("Game already completed, please start another game to continue playing")
     
     #check answer
-    
-    
+    user_response = serialized["answer"]
 
-    return JsonResponse({"test": quizId})
+    if(user_response != answer_data.answer):
+        GameModel.objects.filter(id=game_id).update(is_completed=True)
+
+        response  = {
+            "status": "false",
+            "message": f"oops you got that wrong the correct answer was {user_response}"
+        }
+
+    else:
+        game_data.score += 5 #decided to give 5 points for every question answered correctly
+    
+        GameModel.objects.filter(id=game_id).update(score=game_data.score, is_completed=False)
+
+        response  = {
+            "status": "true",
+            "message": f"correct answer",
+            "score": game_data.score
+        }
+
+    return Response(response)
