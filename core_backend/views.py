@@ -35,9 +35,11 @@ def start_game(request):
 def play_game(request, *args, **kwargs):
     api_data = {} # i added this to ensure it exists regardless of whether the try block is executed successfully
     try:
+        print(kwargs)
         game_id = kwargs['hash']
 
         game_data = get_object_or_404(GameModel, id=game_id)
+        
 
         if game_data.is_completed:
             response = Response({"status_code": 400, "message": "Game already completed, please start another game to continue playing"})
@@ -57,27 +59,29 @@ def play_game(request, *args, **kwargs):
         actor_name = api_data["name"]
         actor_name_2 = api_data2["name"]
 
-        movie_name = api_data["known_for"][0]["original_title"]
+        movie_name = api_data["known_for"][0]['original_title']
+        print(movie_name)
 
 
-        answer = AnswerModel.objects.create(gameId=game_id, answer=actor_name)
+        answer = AnswerModel.objects.create(gameId=game_data, answer=actor_name)
+
 
         actors = get_shuffled_names(actor_name, actor_name_2)
 
         response = {
             "quiz_id": answer.id,
             "data": {
-                "question": f"which of these actors starrd in the movie {movie_name}",
+                "question": f"which of these actors starred in the movie {movie_name}",
                 "options": actors
             }
         }
         
-    except Exception as e:
-        response = {
-            "status": False,
-            "message": str(e),
-        }
-    return Response(response)
+        return Response(response)
+
+    except CustomError as error:
+        return Response({"error": str(error)}, status=error.status_code)
+
+
 
 
 @api_view(["POST"])
@@ -98,8 +102,6 @@ def submit_answer(request, *args, **kwargs):
         if answer_data.answered:
             response = Response({"status_code": 400, "message": "Already answered quiz, please move to the next"})
             return response
-        
-        print(serialized_gameId, game_id)
 
         if str(serialized_gameId) != game_id:
             response = Response({"status_code": 400, "message": "Invalid game id provided"})
