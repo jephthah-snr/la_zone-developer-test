@@ -9,7 +9,8 @@ from django.shortcuts import get_object_or_404
 from lazone_api_service.utils import get_shuffled_names
 from core_backend.implementation.external_api import get_movie, get_random_user
 from lazone_api_service.shared.app_error import CustomSuccessResponse, CustomErrorResponse, CustomError
-from django.db.models import F
+from core_backend.repository.game_repo import GameRepository
+from rest_framework import status
 from django.core.serializers import serialize
 import json
 import random
@@ -133,3 +134,17 @@ def submit_answer(request, *args, **kwargs):
         return Response({"error": str(error)}, status=error.status_code)
 
 
+@api_view(["GET"])
+def get_score(request, *args, **kwargs):
+    try:
+        game_id = kwargs['hash']
+
+        game_data = GameRepository.get_game_by_id(game_id)
+
+        score = game_data.score
+
+        print(score)
+
+        return Response({"status_code": status.HTTP_200_OK, "message": f"you scored {score} points"})
+    except CustomError as error:
+        return Response({"error": str(error)}, status=error.status_code)
