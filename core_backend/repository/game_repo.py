@@ -1,10 +1,12 @@
 from core_backend.models import GameModel
+from django.shortcuts import get_object_or_404
+
+
 
 class GameRepository:
-    @staticmethod
     def get_game_by_id(game_id):
         try:
-            return GameModel.objects.get(id=game_id)
+            return get_object_or_404(GameModel, id=game_id)
         except GameModel.DoesNotExist:
             return None
 

@@ -1,0 +1,1 @@
+web: gunicorn lazone_api_service.wsgi
