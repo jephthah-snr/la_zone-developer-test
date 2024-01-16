@@ -1,4 +1,5 @@
-#LA ZONE DEVELOPER TEST
+# LA ZONE DEVELOPER TEST
+## Core-Backend
 
 simple quiz game built in python and django❤️❤️
 
@@ -50,4 +51,4 @@ postman api deocumentation available at [here](https://documenter.getpostman.com
 
 This service supports readiness and liveliness probes via http://localhost:8000/api/v1/game/health/readyz endpoint
 
-# Core-Backend
+
