@@ -35,7 +35,6 @@ def start_game(request):
 def play_game(request, *args, **kwargs):
     api_data = {} # i added this to ensure it exists regardless of whether the try block is executed successfully
     try:
-        print(kwargs)
         game_id = kwargs['hash']
 
         game_data = get_object_or_404(GameModel, id=game_id)
@@ -60,8 +59,6 @@ def play_game(request, *args, **kwargs):
         actor_name_2 = api_data2["name"]
 
         movie_name = api_data["known_for"][0]['original_title']
-        print(movie_name)
-
 
         answer = AnswerModel.objects.create(gameId=game_data, answer=actor_name)
 
@@ -113,8 +110,6 @@ def submit_answer(request, *args, **kwargs):
 
         user_response = serialized.get("answer")
 
-        print(user_response, answer_data.answer)
-
         if user_response != answer_data.answer:
             GameModel.objects.filter(id=game_id).update(is_completed=True)
             response = Response({"status_code": 400, "message": f"Oops! You got that wrong. The correct answer was {answer_data.answer}"})
@@ -125,8 +120,6 @@ def submit_answer(request, *args, **kwargs):
 
             GameModel.objects.filter(id=game_id).update(score=game_data.score, is_completed=False)
             AnswerModel.objects.filter(id=quiz_id).update(answered=True)
-
-            print(game_data.score)
 
             response = {
             "status": True,
