@@ -1,0 +1,27 @@
+version: '3.10'
+
+services:
+  django:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+    environment:
+      - DJANGO_DEBUG=True
+      - DJANGO_DB_HOST=db
+      - DJANGO_DB_PORT=5432
+      - DJANGO_DB_NAME=appdb
+      - DJANGO_DB_USER=appuser
+      - DJANGO_DB_PASSWORD=secretpassword
+      - DJANGO_SECRET_KEY=django-insecure-!tm^ionc2m_b2z-4)$lpqwm(=yc%1j%1+18s8hqs_)@5j04j62
+
+  db:
+    image: postgres
+    environment:
+      POSTGRES_DB: railway
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 5B*C-CFcb6Fd64d6b6dGC56fC1c-C1FD
