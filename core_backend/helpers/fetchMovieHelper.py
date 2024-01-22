@@ -18,7 +18,7 @@ def save_actor_and_movies():
         actor_poster_url=actor_poster_url)
 
         actor_id = actor.id
-        print(f"Actor: {actor_name}, ID: {actor_id}")
+        #print(f"Actor: {actor_name}, ID: {actor_id}")
 
         for item in movies:
             title = item.get('original_title') or item.get('original_name')
@@ -35,4 +35,4 @@ def save_actor_and_movies():
                 media_type = media_type,
                 actor_id = actor_id
             )
-            print(f"  - Movie: {title}, ID: {movie.id}")
+            #print(f"  - Movie: {title}, ID: {movie.id}")

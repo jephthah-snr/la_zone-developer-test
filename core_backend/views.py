@@ -1,26 +1,21 @@
-from django.shortcuts import render
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
-from django.forms import model_to_dict
 from rest_framework.response import Response
 from core_backend.repository.quiz_repo import get_quiz_by_id, update_quiz_by_id
 from core_backend.repository.game_repo import get_game_by_id, update_game_by_id
-from . models import GameModel, AnswerModel, QuizModel, MovieModel, ActorModel
+from . models import GameModel, QuizModel, MovieModel, ActorModel
 from django.shortcuts import get_object_or_404
 from lazone_api_service.utils import get_shuffled_names
-from core_backend.implementation.external_api import get_movie, get_random_user
-from lazone_api_service.shared.app_error import CustomSuccessResponse, CustomErrorResponse, CustomError
+from lazone_api_service.shared.app_error import CustomError
 from core_backend.helpers.fetchMovieHelper import save_actor_and_movies
 from core_backend.helpers.response import success_response, error_response
 from rest_framework import status
 from core_backend.serializers import QuizSerializer
-from django.core.serializers import serialize
-import json
-import random
+
+
 
 
 # Create your views here.
-
 def health_api(request, *args, **kwargs):
     response = {
         "status": True,
