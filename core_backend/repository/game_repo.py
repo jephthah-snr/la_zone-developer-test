@@ -3,21 +3,17 @@ from django.shortcuts import get_object_or_404
 
 
 
-class GameRepository:
-    def get_game_by_id(game_id):
-        try:
-            return get_object_or_404(GameModel, id=game_id)
-        except GameModel.DoesNotExist:
-            return None
+def get_game_by_id(game_id):
+    quiz = get_object_or_404(GameModel, id=game_id)
+    return quiz
 
-    @staticmethod
-    def update_game_by_id(game_id, data):
-        game = GameModel.objects.get(id=game_id)
+
+def update_game_by_id(game_id, data):
+    try:
+        instance = GameModel.objects.get(id=game_id)
         for key, value in data.items():
-            setattr(game, key, value)
-        game.save()
-        return game
-
-    @staticmethod
-    def get_all_games():
-        return GameModel.objects.all()
+            setattr(instance, key, value)
+        instance.save()
+        return True, instance
+    except GameModel.DoesNotExist:
+        return False, None

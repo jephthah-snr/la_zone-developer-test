@@ -10,8 +10,6 @@ RUN pip install -r requirements.txt
 
 EXPOSE 8000
 
-COPY manage.py /code/
-
 COPY . /code
 
 COPY entrypoint.sh /code/entrypoint.sh

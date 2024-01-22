@@ -13,16 +13,3 @@ def get_movie(page):
     response = requests.get(url, headers=headers)
 
     return response.text
-
-
-def get_random_user():
-    url = os.getenv("RANDOM_USER_BASE_URL", default="https://randomuser.me/api")
-
-    headers = {
-    "accept": "application/json",
-    "Authorization": ""
-    }
-
-    response = requests.get(url, headers=headers)
-
-    return response.text

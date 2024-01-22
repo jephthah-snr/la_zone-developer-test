@@ -27,11 +27,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-!tm^ionc2m_b2z-4)$lpqwm(=yc%1j%1+18s8hqs_)@5j04j62')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -81,25 +81,25 @@ WSGI_APPLICATION = 'lazone_api_service.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME':  'railway',
-        'USER': 'postgres',
-        'PASSWORD': os.getenv(str('DB_PASSWORD')),
-        'HOST': os.getenv(str('DB_HOST')),
-        'PORT': os.getenv(str('DB_PORT'))
-        
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME':  'railway',
+#         'USER': 'postgres',
+#         'PASSWORD': os.getenv(str('DB_PASSWORD')),
+#         'HOST': os.getenv(str('DB_HOST')),
+#         'PORT': os.getenv(str('DB_PORT'))
+        
+#     }
+# }
 
 CACHES = {
     'default': {
