@@ -3,14 +3,15 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from django.forms import model_to_dict
 from rest_framework.response import Response
-from core_backend.repository import game_repo
+from core_backend.repository.quiz_repo import get_quiz_by_id, update_quiz_by_id
+from core_backend.repository.game_repo import get_game_by_id, update_game_by_id
 from . models import GameModel, AnswerModel, QuizModel, MovieModel, ActorModel
 from django.shortcuts import get_object_or_404
 from lazone_api_service.utils import get_shuffled_names
 from core_backend.implementation.external_api import get_movie, get_random_user
 from lazone_api_service.shared.app_error import CustomSuccessResponse, CustomErrorResponse, CustomError
-from core_backend.repository.game_repo import GameRepository
 from core_backend.helpers.fetchMovieHelper import save_actor_and_movies
+from core_backend.helpers.response import success_response, error_response
 from rest_framework import status
 from core_backend.serializers import QuizSerializer
 from django.core.serializers import serialize
@@ -92,6 +93,7 @@ def play_game(request, *args, **kwargs):
                     })
 
             response = {
+                'status': True,
                 'answer_id': quiz_data.get('id'),
                 'movie': {
                     'movie_id': movie.id,
@@ -113,53 +115,35 @@ def play_game(request, *args, **kwargs):
 @api_view(["POST"])
 def submit_answer(request, *args, **kwargs):
     try:
-        game_id = kwargs['hash']
+        game_id = kwargs.get('hash')
+        quiz_id = request.data.get("quizId")
+        answer = request.data.get("answer")
 
-        body = request.body
-        serialized = json.loads(body)
+        quiz = get_quiz_by_id(quiz_id)
+        game = get_game_by_id(game_id)
 
-        quiz_id = serialized.get("quizId")
+        if quiz.answered:
+            return error_response('Quiz has already been answered, move on to the next one', status.HTTP_400_BAD_REQUEST)
 
-        answer_data = get_object_or_404(AnswerModel, id=quiz_id)
-        game_data = get_object_or_404(GameModel, id=game_id)
 
-        serialized_gameId = AnswerModel.objects.filter(id=quiz_id).values_list('gameId', flat=True).first()
+        if str(quiz.game_id) != game_id:
+            return error_response('Invalid game id provided', status.HTTP_400_BAD_REQUEST)
 
-        if answer_data.answered:
-            response = Response({"status_code": 400, "message": "Already answered quiz, please move to the next"})
-            return response
+        if game.is_completed:
+            return error_response('Game already completed, please start another game to continue playing', status.HTTP_400_BAD_REQUEST)
 
-        if str(serialized_gameId) != game_id:
-            response = Response({"status_code": 400, "message": "Invalid game id provided"})
-            return response
-
-        if game_data.is_completed:
-            response = Response({"status_code": 400, "message": "Game already completed, please start another game to continue playing"})
-            return response
-
-        user_response = serialized.get("answer")
-
-        if user_response != answer_data.answer:
-            GameModel.objects.filter(id=game_id).update(is_completed=True)
-            response = Response({"status_code": 400, "message": f"Oops! You got that wrong. The correct answer was {answer_data.answer}"})
-            return response
-
+        if answer == quiz.correct_answer:
+            score = game.score + 5
+            update_game_by_id(game_id, {'score': score})
+            update_quiz_by_id(quiz_id, {'answered': True})
+            return success_response('Answer submitted successfully', status.HTTP_200_OK, {'score': score})
         else:
-            game_data.score += 5  # i decided to give 5 points for every question answered correctly
-
-            GameModel.objects.filter(id=game_id).update(score=game_data.score, is_completed=False)
-            AnswerModel.objects.filter(id=quiz_id).update(answered=True)
-
-            response = {
-            "status": True,
-            "message": "Correct answer",
-            "score": game_data.score
-            }
-
-        return Response(response)
-
+            update_game_by_id(game_id, {'is_completed': True})
+            return error_response(f'Oops! You got that wrong.', status.HTTP_500_INTERNAL_SERVER_ERROR)
     except CustomError as error:
         return Response({"error": str(error)}, status=error.status_code)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["GET"])
@@ -167,12 +151,14 @@ def get_score(request, *args, **kwargs):
     try:
         game_id = kwargs['hash']
 
-        game_data = GameRepository.get_game_by_id(game_id)
+        game_data = get_game_by_id(game_id)
 
         score = game_data.score
 
-        print(score)
-
-        return Response({"status_code": status.HTTP_200_OK, "message": f"you scored {score} points"})
+        response = {
+            'game': game_id,
+            'score': score
+        }
+        return success_response('Answer submitted successfully', status.HTTP_200_OK, response)
     except CustomError as error:
         return Response({"error": str(error)}, status=error.status_code)
