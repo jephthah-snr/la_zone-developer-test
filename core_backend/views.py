@@ -30,6 +30,12 @@ def start_game(request):
 
         new_game_id = new_game.id
 
+        movies = MovieModel.objects.all()
+
+        if not movies:
+            print('Fetching game data...')
+            save_actor_and_movies()
+
         for _ in range(8):
             random_movie = MovieModel.objects.order_by('?').first()
 
@@ -89,7 +95,7 @@ def play_game(request, *args, **kwargs):
 
             response = {
                 'status': True,
-                'answer_id': quiz_data.get('id'),
+                'quiz_id': quiz_data.get('id'),
                 'movie': {
                     'movie_id': movie.id,
                     'name': movie.title,
@@ -111,8 +117,8 @@ def play_game(request, *args, **kwargs):
 def submit_answer(request, *args, **kwargs):
     try:
         game_id = kwargs.get('hash')
-        quiz_id = request.data.get("quizId")
-        answer = request.data.get("answer")
+        quiz_id = request.data.get("quiz_id")
+        answer = request.data.get("actor_id")
 
         quiz = get_quiz_by_id(quiz_id)
         game = get_game_by_id(game_id)

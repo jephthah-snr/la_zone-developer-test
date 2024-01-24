@@ -81,25 +81,24 @@ WSGI_APPLICATION = 'lazone_api_service.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
-
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME':  'railway',
-#         'USER': 'postgres',
-#         'PASSWORD': os.getenv(str('DB_PASSWORD')),
-#         'HOST': os.getenv(str('DB_HOST')),
-#         'PORT': os.getenv(str('DB_PORT'))
-        
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
+
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'railway',
+        'USER': 'postgres',
+        'PASSWORD': 'fccgB44D3DCEBd146d115d5f--D6e62F',
+        'HOST': 'monorail.proxy.rlwy.net',
+        'PORT': '28764'
+    }
+}
 
 CACHES = {
     'default': {
