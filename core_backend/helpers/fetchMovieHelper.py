@@ -35,4 +35,3 @@ def save_actor_and_movies():
                 media_type = media_type,
                 actor_id = actor_id
             )
-            #print(f"  - Movie: {title}, ID: {movie.id}")
