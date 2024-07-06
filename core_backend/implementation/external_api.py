@@ -1,3 +1,4 @@
+
 import requests
 import os
 
@@ -10,4 +11,6 @@ def get_movie(page):
     "Authorization": f"Bearer {os.getenv('THEMOVIE_DB_AUTH')}"
     }
 
-    response = requests.get(url, headers=heade
+    response = requests.get(url, headers=headers)
+
+    return response.text
