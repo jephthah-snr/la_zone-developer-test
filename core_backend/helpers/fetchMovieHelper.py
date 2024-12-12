@@ -1,8 +1,7 @@
 from core_backend.models import ActorModel, MovieModel
 from core_backend.implementation.external_api import get_movie
 import json
-
-import random
+import random___
 
 def save_actor_and_movies():
     data = json.loads(get_movie(random.randrange(1, 12)))
@@ -19,11 +18,6 @@ def save_actor_and_movies():
         actor_poster_url=actor_poster_url)
 
         actor_id = actor.id
-
-
-
-
-        
 
         for item in movies:
             title = item.get('original_title') or item.get('original_name')
