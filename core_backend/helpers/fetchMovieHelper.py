@@ -19,7 +19,11 @@ def save_actor_and_movies():
         actor_poster_url=actor_poster_url)
 
         actor_id = actor.id
-       
+
+
+
+
+        
 
         for item in movies:
             title = item.get('original_title') or item.get('original_name')
