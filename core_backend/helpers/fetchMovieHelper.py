@@ -1,6 +1,7 @@
 from core_backend.models import ActorModel, MovieModel
 from core_backend.implementation.external_api import get_movie
 import json
+
 import random
 
 def save_actor_and_movies():
